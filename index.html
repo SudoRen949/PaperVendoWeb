@@ -5,90 +5,112 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Paper Vendo Web Server</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f6f9;
-            color: #333;
-            padding: 30px;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        h1 {
-            color: #2c3e50;
-        }
-        .dashboard-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-top: 20px;
-        }
-        h3 {
-            margin: 15px 0;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        .value {
-            font-weight: bold;
-            color: #2980b9;
-        }
+        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f4f6f9; color: #333; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 500px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
+        input[type="number"] { width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
+        button { background-color: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        button:hover { background-color: #0056b3; }
+        hr { border: 0; height: 1px; background: #ddd; }
+        .data-val { font-weight: bold; color: #007bff; }
     </style>
 </head>
 <body>
 
     <h1>System Information</h1>
     <hr/>
-    
-    <div class="dashboard-card">
-        <h3>Total money: <span id="totalMoney" class="value">Loading...</span> Pesos</h3>
-        <h3>Paper count (A4): <span id="a4Count" class="value">Loading...</span></h3>
-        <h3>Paper count (Newsprint): <span id="newsprintCount" class="value">Loading...</span></h3>
+
+    <div class="card">
+        <h3>Total money: <span id="totalMoney" class="data-val">Loading...</span> Pesos</h3>
+        <h3>Paper count (A4): <span id="a4Count" class="data-val">Loading...</span></h3>
+        <h3>Paper count (Newsprint): <span id="newsprintCount" class="data-val">Loading...</span></h3>
+    </div>
+
+    <h2>Manage Inventory</h2>
+    <div class="card">
+        <div class="form-group">
+            <label for="inputA4">Update A4 Count:</label>
+            <div>
+                <input type="number" id="inputA4" min="0">
+                <button onclick="updateA4()">Save</button>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="inputNewsprint">Update Newsprint Count:</label>
+            <div>
+                <input type="number" id="inputNewsprint" min="0">
+                <button onclick="updateNewsprint()">Save</button>
+            </div>
+        </div>
     </div>
 
     <script type="module">
+        // 1. Import the specific Firebase modules we need via CDN
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
-        // 2. Your Web App's Firebase Configuration Keys
-        // Replace these placeholders with the actual config object from your Firebase Console
-		const firebaseConfig = {
-			apiKey: "AIzaSyB1Wt1Zd17R-bNAidjcUhV8wK5iQ3GcY84",
-			authDomain: "databases-e1875.firebaseapp.com",
-			databaseURL: "https://databases-e1875-default-rtdb.asia-southeast1.firebasedatabase.app",
-			projectId: "databases-e1875",
-			storageBucket: "databases-e1875.firebasestorage.app",
-			messagingSenderId: "150079514114",
-			appId: "1:150079514114:web:84330233d30e865c6d291b"
-		};
+        // 2. Paste YOUR unique Firebase Configuration keys here
+        // (You can find this in your Firebase Console project settings)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
 
-        // 3. Initialize Firebase Engine
+        // 3. Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
-        // 4. Create references to your exact database paths
-        const moneyRef = ref(database, 'db-papervendo/money_total_amount');
-        const a4Ref = ref(database, 'db-papervendo/paper_a4_count');
-        const newsprintRef = ref(database, 'db-papervendo/paper_newsprint_count');
-
-        // 5. Setup Live Realtime Listeners ('onValue')
+        // --- LIVE SYNC: READ DATA IN REALTIME ---
         
-        // Listen for Total Money updates
+        // Listen to Total Money
+        const moneyRef = ref(database, 'db-papervendo/money_total_amount');
         onValue(moneyRef, (snapshot) => {
-            const data = snapshot.val();
-            document.getElementById('totalMoney').innerText = (data !== null) ? data : "0";
+            document.getElementById('totalMoney').innerText = snapshot.val() !== null ? snapshot.val() : 0;
         });
 
-        // Listen for A4 Paper count updates
+        // Listen to A4 Paper Count
+        const a4Ref = ref(database, 'db-papervendo/paper_a4_count');
         onValue(a4Ref, (snapshot) => {
-            const data = snapshot.val();
-            document.getElementById('a4Count').innerText = (data !== null) ? data : "0";
+            const val = snapshot.val() !== null ? snapshot.val() : 0;
+            document.getElementById('a4Count').innerText = val;
+            document.getElementById('inputA4').value = val; // Pre-fill input field
         });
 
-        // Listen for Newsprint Paper count updates
+        // Listen to Newsprint Paper Count
+        const newsprintRef = ref(database, 'db-papervendo/paper_newsprint_count');
         onValue(newsprintRef, (snapshot) => {
-            const data = snapshot.val();
-            document.getElementById('newsprintCount').innerText = (data !== null) ? data : "0";
+            const val = snapshot.val() !== null ? snapshot.val() : 0;
+            document.getElementById('newsprintCount').innerText = val;
+            document.getElementById('inputNewsprint').value = val; // Pre-fill input field
         });
+
+        // --- WRITE DATA: UPDATE CONTROLS ---
+
+        // Function to push new A4 count to Firebase
+        window.updateA4 = function() {
+            const newValue = parseInt(document.getElementById('inputA4').value);
+            if (!isNaN(newValue)) {
+                set(ref(database, 'db-papervendo/paper_a4_count'), newValue)
+                    .then(() => console.log("A4 count updated!"))
+                    .catch((err) => alert("Error updating: " + err.message));
+            }
+        };
+
+        // Function to push new Newsprint count to Firebase
+        window.updateNewsprint = function() {
+            const newValue = parseInt(document.getElementById('inputNewsprint').value);
+            if (!isNaN(newValue)) {
+                set(ref(database, 'db-papervendo/paper_newsprint_count'), newValue)
+                    .then(() => console.log("Newsprint count updated!"))
+                    .catch((err) => alert("Error updating: " + err.message));
+            }
+        };
     </script>
 </body>
 </html>
