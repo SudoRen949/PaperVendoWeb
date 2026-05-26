@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paper Vendo Web Server</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            padding: 30px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        .dashboard-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        h3 {
+            margin: 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .value {
+            font-weight: bold;
+            color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>System Information</h1>
+    <hr/>
+    
+    <div class="dashboard-card">
+        <h3>Total money: <span id="totalMoney" class="value">Loading...</span> Pesos</h3>
+        <h3>Paper count (A4): <span id="a4Count" class="value">Loading...</span></h3>
+        <h3>Paper count (Newsprint): <span id="newsprintCount" class="value">Loading...</span></h3>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
+        // 2. Your Web App's Firebase Configuration Keys
+        // Replace these placeholders with the actual config object from your Firebase Console
+		const firebaseConfig = {
+			apiKey: "AIzaSyB1Wt1Zd17R-bNAidjcUhV8wK5iQ3GcY84",
+			authDomain: "databases-e1875.firebaseapp.com",
+			databaseURL: "https://databases-e1875-default-rtdb.asia-southeast1.firebasedatabase.app",
+			projectId: "databases-e1875",
+			storageBucket: "databases-e1875.firebasestorage.app",
+			messagingSenderId: "150079514114",
+			appId: "1:150079514114:web:84330233d30e865c6d291b"
+		};
+
+        // 3. Initialize Firebase Engine
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // 4. Create references to your exact database paths
+        const moneyRef = ref(database, 'db-papervendo/money_total_amount');
+        const a4Ref = ref(database, 'db-papervendo/paper_a4_count');
+        const newsprintRef = ref(database, 'db-papervendo/paper_newsprint_count');
+
+        // 5. Setup Live Realtime Listeners ('onValue')
+        
+        // Listen for Total Money updates
+        onValue(moneyRef, (snapshot) => {
+            const data = snapshot.val();
+            document.getElementById('totalMoney').innerText = (data !== null) ? data : "0";
+        });
+
+        // Listen for A4 Paper count updates
+        onValue(a4Ref, (snapshot) => {
+            const data = snapshot.val();
+            document.getElementById('a4Count').innerText = (data !== null) ? data : "0";
+        });
+
+        // Listen for Newsprint Paper count updates
+        onValue(newsprintRef, (snapshot) => {
+            const data = snapshot.val();
+            document.getElementById('newsprintCount').innerText = (data !== null) ? data : "0";
+        });
+    </script>
+</body>
+</html>
